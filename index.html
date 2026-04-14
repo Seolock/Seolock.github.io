@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seolock</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Noto+Serif+KR:wght@300;400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    background: #06111e;
+    font-family: 'Noto Serif KR', 'Cormorant Garamond', serif;
+    cursor: pointer;
+  }
+
+  #canvas {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: block;
+    transition: opacity 1.8s ease;
+  }
+
+  #splash-overlay {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 10; pointer-events: none;
+    transition: opacity 1.4s ease;
+  }
+
+  .title-kr {
+    font-family: 'Noto Serif KR', serif;
+    font-weight: 300;
+    font-size: clamp(1.8rem, 5vw, 4rem);
+    color: rgba(255, 252, 240, 0.93);
+    letter-spacing: 0.2em;
+    text-shadow: 0 0 60px rgba(160, 210, 255, 0.5), 0 0 120px rgba(100, 180, 230, 0.25);
+    animation: riseIn 2.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+  }
+
+  .divider {
+    width: 80px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(200, 230, 255, 0.5), transparent);
+    margin: 1.4rem auto;
+    animation: riseIn 2.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+    opacity: 0;
+  }
+
+  .title-en {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: clamp(0.85rem, 2.5vw, 1.3rem);
+    color: rgba(180, 215, 250, 0.65);
+    letter-spacing: 0.55em;
+    text-transform: uppercase;
+    animation: riseIn 2.8s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
+    opacity: 0;
+  }
+
+  #hint {
+    position: fixed;
+    bottom: 7%;
+    left: 50%; transform: translateX(-50%);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(0.65rem, 1.8vw, 0.9rem);
+    color: rgba(200, 225, 255, 0.35);
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 10;
+    animation: fadeHint 3s ease 3s both, hintPulse 3s ease-in-out 4s infinite;
+    transition: opacity 1.2s ease;
+  }
+
+  #next-screen {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: linear-gradient(160deg, #0c1a1a 0%, #0f2015 50%, #0a1520 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 1.2rem;
+    z-index: 50;
+    opacity: 0; pointer-events: none;
+    transition: opacity 1.8s ease;
+  }
+  #next-screen.visible { opacity: 1; pointer-events: all; }
+
+  #next-screen h1 {
+    font-family: 'Noto Serif KR', serif;
+    font-weight: 300;
+    font-size: clamp(1.6rem, 5vw, 3rem);
+    color: rgba(210, 240, 220, 0.85);
+    letter-spacing: 0.2em;
+  }
+  #next-screen p {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(0.8rem, 2vw, 1.05rem);
+    color: rgba(160, 200, 180, 0.4);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+  }
+
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeHint {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+  @keyframes hintPulse {
+    0%, 100% { opacity: 0.2; }
+    50%       { opacity: 0.55; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<div id="splash-overlay">
+  <div class="title-kr">Seolock's Space</div>
+  <div class="divider"></div>
+  <div class="title-en">IN HIS STEPS</div>
+</div>
+
+<div id="hint">Click anywhere or press any key to continue</div>
+
+<div id="next-screen">
+  <h1>다음 페이지</h1>
+  <p>Your next page content here</p>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d');
+let W, H, t = 0, animId;
+
+function resize() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+const STAR_COUNT = 320;
+const stars = Array.from({ length: STAR_COUNT }, () => ({
+  fx: Math.random(),
+  fy: Math.random() * 0.58,
+  r:  Math.random() * 1.5 + 0.4,
+  phase: Math.random() * Math.PI * 2,
+  speed: Math.random() * 0.018 + 0.004,
+  hue:  ['#fff', '#d8ecff', '#ffe9cc', '#c8faea', '#e8d8ff'][Math.floor(Math.random() * 5)]
+}));
+
+const AURORAS = [
+  { fy: 0.20, c1: [0, 220, 150],   c2: [80, 130, 255],  phase: 0,   spd: 0.0025 },
+  { fy: 0.28, c1: [140,  80, 240], c2: [0,  200, 170],  phase: 2.1, spd: 0.0018 },
+  { fy: 0.14, c1: [210, 110, 255], c2: [0,  185, 120],  phase: 4.3, spd: 0.0013 },
+];
+
+const RIDGES = [
+  [0,0.88, 0.08,0.46, 0.18,0.60, 0.28,0.42, 0.40,0.56, 0.52,0.40, 0.64,0.54, 0.75,0.38, 0.88,0.52, 1,0.88],
+  [0,0.92, 0.05,0.60, 0.16,0.68, 0.30,0.52, 0.44,0.62, 0.57,0.50, 0.70,0.60, 0.82,0.48, 0.93,0.58, 1,0.92],
+  [0,0.96, 0.10,0.74, 0.22,0.80, 0.36,0.70, 0.50,0.76, 0.63,0.68, 0.76,0.74, 0.88,0.66, 1,0.96],
+];
+const RIDGE_COLORS = [
+  ['#0c2236', '#193650'],
+  ['#152e44', '#213f58'],
+  ['#1c3a52', '#2a4e68'],
+];
+
+const MOON = { fx: 0.76, fy: 0.13, r: 38 };
+
+const PARTICLES = Array.from({ length: 70 }, () => ({
+  fx: Math.random(),
+  fy: 0.90 + Math.random() * 0.08,
+  vx: (Math.random() - 0.5) * 0.00018,
+  vy: -(Math.random() * 0.00030 + 0.00012),
+  life: Math.random(),
+  spd:  Math.random() * 0.0025 + 0.0010,
+  sz:   Math.random() * 2.2 + 0.8,
+}));
+
+function drawSky() {
+  const g = ctx.createLinearGradient(0, 0, 0, H * 0.88);
+  g.addColorStop(0,   '#03080f');
+  g.addColorStop(0.4, '#071525');
+  g.addColorStop(1,   '#0e2a3c');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H * 0.88);
+}
+
+function drawMoon() {
+  const mx = MOON.fx * W, my = MOON.fy * H, r = MOON.r;
+  const halo = ctx.createRadialGradient(mx, my, r * 0.6, mx, my, r * 3.2);
+  halo.addColorStop(0,   'rgba(200,228,255,0.14)');
+  halo.addColorStop(0.5, 'rgba(160,200,255,0.06)');
+  halo.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = halo;
+  ctx.beginPath(); ctx.arc(mx, my, r * 3.2, 0, Math.PI * 2); ctx.fill();
+  const disk = ctx.createRadialGradient(mx - r * 0.25, my - r * 0.25, 0, mx, my, r);
+  disk.addColorStop(0, '#f9f5ec');
+  disk.addColorStop(1, '#c8c0b0');
+  ctx.fillStyle = disk;
+  ctx.beginPath(); ctx.arc(mx, my, r, 0, Math.PI * 2); ctx.fill();
+}
+
+function drawStars() {
+  stars.forEach(s => {
+    const blink = 0.45 + 0.55 * Math.sin(s.phase + t * s.speed);
+    ctx.globalAlpha = blink * 0.88;
+    ctx.fillStyle = s.hue;
+    ctx.beginPath();
+    ctx.arc(s.fx * W, s.fy * H, s.r * (0.8 + 0.2 * blink), 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+}
+
+function drawAurora() {
+  AURORAS.forEach(a => {
+    const by = a.fy * H;
+    for (let k = 0; k < 4; k++) {
+      const alpha = (0.10 - k * 0.02);
+      const g2 = ctx.createLinearGradient(0, by - 55 + k * 12, 0, by + 55 + k * 12);
+      g2.addColorStop(0,   `rgba(${a.c1[0]},${a.c1[1]},${a.c1[2]},0)`);
+      g2.addColorStop(0.35,`rgba(${a.c1[0]},${a.c1[1]},${a.c1[2]},${alpha})`);
+      g2.addColorStop(0.65,`rgba(${a.c2[0]},${a.c2[1]},${a.c2[2]},${alpha})`);
+      g2.addColorStop(1,   `rgba(${a.c2[0]},${a.c2[1]},${a.c2[2]},0)`);
+      ctx.fillStyle = g2;
+      ctx.beginPath();
+      ctx.moveTo(0, by + k * 14);
+      for (let x = 0; x <= W; x += 6) {
+        const fx = x / W;
+        const wy = Math.sin(fx * 5.5 + t * a.spd + a.phase + k * 0.8) * 30
+                 + Math.sin(fx * 2.8 - t * a.spd * 0.6 + a.phase)     * 18;
+        ctx.lineTo(x, by + wy + k * 14);
+      }
+      ctx.lineTo(W, by - 55 + k * 12);
+      ctx.lineTo(0, by - 55 + k * 12);
+      ctx.closePath();
+      ctx.fill();
+    }
+  });
+}
+
+function drawMountains() {
+  RIDGES.forEach((pts, i) => {
+    const [dark, light] = RIDGE_COLORS[i];
+    ctx.beginPath();
+    ctx.moveTo(pts[0] * W, pts[1] * H);
+    for (let j = 2; j < pts.length; j += 2) {
+      ctx.lineTo(pts[j] * W, pts[j + 1] * H);
+    }
+    ctx.lineTo(W, H); ctx.lineTo(0, H);
+    ctx.closePath();
+    const mg = ctx.createLinearGradient(0, 0.35 * H, 0, H);
+    mg.addColorStop(0, light); mg.addColorStop(1, dark);
+    ctx.fillStyle = mg;
+    ctx.fill();
+    if (i === 0) {
+      for (let j = 2; j < pts.length - 2; j += 2) {
+        const px = pts[j] * W, py = pts[j + 1] * H;
+        const prevY = pts[j - 1] * H, nextY = pts[j + 3] * H;
+        if (py < prevY - 18 && py < nextY - 18) {
+          ctx.beginPath(); ctx.arc(px, py + 4, 10, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(235,245,255,0.65)';
+          ctx.fill();
+        }
+      }
+    }
+  });
+}
+
+function drawWater() {
+  const wy = H * 0.845;
+  ctx.beginPath();
+  ctx.moveTo(0, wy);
+  for (let x = 0; x <= W; x += 5) {
+    const wave = Math.sin(x * 0.016 + t * 0.022) * 5.5
+               + Math.sin(x * 0.007 - t * 0.013) * 8;
+    ctx.lineTo(x, wy + wave);
+  }
+  ctx.lineTo(W, H); ctx.lineTo(0, H);
+  ctx.closePath();
+  const wg = ctx.createLinearGradient(0, wy, 0, H);
+  wg.addColorStop(0,   '#0d2845');
+  wg.addColorStop(0.35,'#0e2f50');
+  wg.addColorStop(1,   '#070e1a');
+  ctx.fillStyle = wg;
+  ctx.fill();
+  const mx = MOON.fx * W;
+  for (let row = 0; row < 28; row++) {
+    const ry = wy + (row / 28) * (H - wy);
+    const ww = 22 + row * 3.5;
+    const wobble = Math.sin(row * 0.6 + t * 0.035) * (row * 0.6);
+    const a = (0.18 - row * 0.005) * Math.max(0, 1 - row / 30);
+    ctx.fillStyle = `rgba(210,232,255,${a})`;
+    ctx.fillRect(mx - ww + wobble, ry, ww * 2, 2.5);
+  }
+}
+
+function drawParticles() {
+  PARTICLES.forEach(p => {
+    p.fx   += p.vx;
+    p.fy   += p.vy;
+    p.life += p.spd;
+    if (p.fy < 0.45 || p.fx < 0 || p.fx > 1) {
+      p.fx   = Math.random();
+      p.fy   = 0.90 + Math.random() * 0.07;
+      p.life = 0;
+    }
+    const a = Math.sin(p.life * Math.PI) * 0.65;
+    ctx.globalAlpha = a;
+    ctx.fillStyle   = '#9ee8c0';
+    ctx.beginPath();
+    ctx.arc(p.fx * W, p.fy * H, p.sz, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+}
+
+function frame() {
+  ctx.clearRect(0, 0, W, H);
+  drawSky();
+  drawAurora();
+  drawMoon();
+  drawStars();
+  drawMountains();
+  drawWater();
+  drawParticles();
+  t++;
+  animId = requestAnimationFrame(frame);
+}
+frame();
+
+/* ── 자연스러운 크로스페이드 전환 ── */
+let transitioning = false;
+
+function goNext() {
+  if (transitioning) return;
+  transitioning = true;
+
+  const overlay = document.getElementById('splash-overlay');
+  const hint    = document.getElementById('hint');
+  const next    = document.getElementById('next-screen');
+
+  /* 오버레이 텍스트 페이드아웃 */
+  overlay.style.opacity = '0';
+  hint.style.opacity    = '0';
+
+  /* 캔버스도 서서히 페이드아웃 */
+  canvas.style.opacity = '0';
+
+  /* 다음 화면 페이드인 (약간 딜레이로 자연스럽게 겹침) */
+  setTimeout(() => {
+    next.classList.add('visible');
+  }, 200);
+}
+
+document.addEventListener('click',   goNext);
+document.addEventListener('keydown', goNext);
+</script>
+</body>
+</html>
