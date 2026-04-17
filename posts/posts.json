@@ -1,13 +1,10 @@
 [
   {
-    "file": "posts/hello-world.md",
-    "title": "Hello World !",
+    "file": "posts/hagah.md",
+    "title": "함께 '하가'하자",
     "date": "2026-04-17",
-    "category": "낙서장",
-    "tags": ["first", "testing"],
-    "preview": "그런즉 너희가 먹든지 마시든지 무엇을 하든지 다 하나님의 영광을 위하여 하라. -고린도전서10:31"
-  },
-  {
-    "file": "posts/hello-world.md"
+    "category": "Writings",
+    "tags": ["B2B", "hagah"],
+    "preview": "오직 여호와의 율법을 즐거워하여 그의 율법을 주야로 묵상하는도다"
   }
 ]
