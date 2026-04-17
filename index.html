@@ -15,8 +15,8 @@
       --glass: rgba(255, 255, 255, 0.04);
       --glass-border: rgba(255, 255, 255, 0.08);
       --aurora-green: #3dffa0;
-      --aurora-teal: #00e5cc;
-      --aurora-purple: #b06aff;
+      --aurora-teal: #00e5cac1;
+      --aurora-purple: #b06affb1;
       --aurora-blue: #4fa8ff;
       --text-primary: rgba(230, 235, 245, 0.95);
       --text-secondary: rgba(180, 190, 210, 0.7);
@@ -80,7 +80,7 @@
 
     .blog-subtitle {
       font-family: 'DM Mono', monospace;
-      font-size: 0.7rem;
+      font-size: 0.8rem;
       font-weight: 300;
       letter-spacing: 0.3em;
       color: rgba(61, 255, 160, 0.7);
@@ -138,7 +138,7 @@
       height: 72px;
       border-radius: 50%;
       margin: 0 auto 14px;
-      background: linear-gradient(135deg, var(--aurora-teal), var(--aurora-purple));
+      background: linear-gradient(210deg, var(--aurora-teal), var(--aurora-purple));
       display: flex;
       align-items: center;
       justify-content: center;
@@ -478,7 +478,7 @@
       <div class="sidebar-card profile-card">
         <div class="profile-avatar" id="avatar-el">S</div>
         <div class="profile-name" id="sidebar-name">Seolock</div>
-        <div class="profile-bio" id="sidebar-bio">Writer · Researcher · Dreamer</div>
+        <div class="profile-bio" id="sidebar-bio">Programmer · Writer · Researcher</div>
         <div class="profile-stats">
           <div class="stat">
             <div class="stat-number" id="stat-topics">—</div>
@@ -529,7 +529,7 @@
         for(let i=0;i<n;i++) stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.2+0.2,phase:Math.random()*Math.PI*2,speed:Math.random()*0.008+0.002});
       }
       function draw(){
-        time+=0.016;
+        time+=0.005;
         const bg=ctx.createLinearGradient(0,0,0,H);
         bg.addColorStop(0,'#030510'); bg.addColorStop(0.5,'#070c1a'); bg.addColorStop(1,'#0a0f1e');
         ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
