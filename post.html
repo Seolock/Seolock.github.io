@@ -19,7 +19,7 @@
       --aurora-purple: #b06aff;
       --aurora-blue: #4fa8ff;
       --text-primary: rgba(230, 235, 245, 0.95);
-      --text-secondary: rgba(180, 190, 210, 0.7);
+      --text-secondary: rgb(180, 190, 210);
       --text-muted: rgba(130, 145, 170, 0.55);
       --accent-glow: rgba(61, 255, 160, 0.15);
       --header-height: 320px;
@@ -119,53 +119,11 @@
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    .post-header {
-      padding: 40px 44px 32px;
-      border-bottom: 1px solid var(--glass-border);
-      background: linear-gradient(135deg, rgba(61,255,160,0.03), rgba(176,106,255,0.03));
-    }
-
-    .post-header-meta {
-      display: flex; align-items: center; gap: 12px; margin-bottom: 18px;
-    }
-
-    .post-category-badge {
-      font-family: 'DM Mono', monospace; font-size: 0.65rem;
-      letter-spacing: 0.15em; text-transform: uppercase;
-      color: var(--aurora-green);
-      background: rgba(61,255,160,0.1);
-      padding: 3px 12px; border-radius: 20px;
-      border: 1px solid rgba(61,255,160,0.2);
-    }
-
-    .post-header-date {
-      font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--text-muted);
-    }
-
-    .post-header-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(1.8rem, 4vw, 2.6rem);
-      font-weight: 300; line-height: 1.3;
-      letter-spacing: 0.02em; color: #fff;
-      margin-bottom: 14px;
-    }
-
-    .post-header-tags {
-      display: flex; gap: 6px; flex-wrap: wrap;
-    }
-
-    .post-header-tag {
-      font-size: 0.7rem; color: var(--text-muted);
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.07);
-      padding: 3px 10px; border-radius: 4px;
-    }
-
     /* Markdown body */
     .post-body {
       padding: 40px 44px;
       line-height: 1.85;
-      font-size: 0.95rem; 
+      font-size: 1.2rem; 
       font-weight: 300;
       color: var(--text-secondary);
     }
@@ -199,7 +157,7 @@
 
     .post-body a:hover { border-color: var(--aurora-green); }
 
-    .post-body strong { font-weight: 500; color: var(--text-primary); }
+    .post-body strong { font-weight: 500; color: var(--text-secondary); }
     .post-body em { font-style: italic; color: rgba(200,210,230,0.8); }
 
     .post-body ul, .post-body ol {
@@ -214,7 +172,6 @@
       margin: 1.6em 0;
       background: rgba(61,255,160,0.04);
       border-radius: 0 8px 8px 0;
-      font-family: 'Cormorant Garamond', serif;
       font-size: 1.1rem;
       font-style: italic;
       color: rgba(200,215,235,0.8);
@@ -298,7 +255,6 @@
     @media (max-width: 768px) {
       #layout { padding: 0 16px 40px; }
       :root { --header-height: 220px; }
-      .post-header { padding: 28px 22px 22px; }
       .post-body { padding: 28px 22px; }
     }
   </style>
@@ -403,22 +359,10 @@
         const html = marked.parse(markdown);
 
         const title = meta.title || extractTitle(markdown) || file.split('/').pop().replace('.md','');
-        const dateStr = meta.date
-          ? new Date(meta.date).toLocaleDateString('ko-KR', {year:'numeric',month:'long',day:'numeric'})
-          : '';
-        const tags = (meta.tags||[]).map(t=>`<span class="post-header-tag">#${t}</span>`).join('');
 
         document.title = `Aurora — ${title}`;
 
         wrapper.innerHTML = `
-          <div class="post-header">
-            <div class="post-header-meta">
-              ${meta.category ? `<span class="post-category-badge">${meta.category}</span>` : ''}
-              ${dateStr ? `<span class="post-header-date">${dateStr}</span>` : ''}
-            </div>
-            <h1 class="post-header-title">${title}</h1>
-            ${tags ? `<div class="post-header-tags">${tags}</div>` : ''}
-          </div>
           <div class="post-body">${html}</div>
         `;
       } catch(err) {
