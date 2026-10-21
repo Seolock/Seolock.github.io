@@ -1,0 +1,12 @@
+# 페이지 표시에 필요한 파일만 올림: index.html, practice.html, style.css, fmt.js, data.js
+
+# 원본 교재 (저작권: 개인 용도 전용)
+*.pdf
+
+# 데이터 생성·검증 스크립트 (로컬 전용)
+extract.py
+verify.py
+__pycache__/
+
+# OS 파일
+.DS_Store

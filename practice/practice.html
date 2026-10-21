@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>연습</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav><a href="index.html">요약 정리</a><a href="practice.html"><b>연습</b></a></nav>
+<h1>연습</h1>
+<div class="filters">
+  <select id="scope"></select>
+  <select id="kind">
+    <option value="all">주제 + 개별 용어</option>
+    <option value="topic">주제만</option>
+    <option value="term">개별 용어만</option>
+  </select>
+</div>
+<div class="card" id="card" role="button" tabindex="0"></div>
+<div class="controls">
+  <button id="prev">◀ 이전</button>
+  <span id="pos"></span>
+  <button id="next">다음 ▶</button>
+  <button id="shuffle">섞기</button>
+  <button id="mode"></button>
+</div>
+<p class="hint">카드 클릭 / Space: 뒤집기 · ←/→: 이동 · M: 모드 전환</p>
+
+<script src="data.js"></script>
+<script src="fmt.js"></script>
+<script>
+let deck = [], order = [], idx = 0, flipped = false, reverse = true;
+const card = document.getElementById('card');
+const scopeSel = document.getElementById('scope'), kindSel = document.getElementById('kind');
+const term = d => d.q.replace(/^[\d-]+\.\s*/, '');
+
+// 설명 속 정답 용어(와 바로 뒤 괄호 설명)를 가림
+const words = s => s.replace(/[()\[\],/·\-]/g, ' ').split(/\s+/).filter(w => w.length >= 2).map(w => w.toLowerCase());
+function mask(text, t) {
+  const base = t.replace(/\(.*?\)/g, '').replace(/\s+/g, ' ').trim();
+  const inner = [...t.matchAll(/\((.*?)\)/g)].map(m => m[1]);
+  // 첫 문장의 정의 대상 "X(…)은/는/이란" — 용어와 단어가 겹칠 때만 (예: 애자일 모형 ↔ "애자일(Agile)은")
+  const m = text.match(/^(?:•\s*)?([^\s(*|][^(\n*|]{0,25}?)(?:\([^)]*\))?(?:은|는|이란|란)\s/);
+  const tw = words(t);
+  const sw = m ? words(m[1]) : [];
+  const subj = sw.length && sw.every(w => tw.some(x => x.includes(w) || w.includes(x))) ? [m[1]] : [];  // 주어의 모든 단어가 용어 단어여야 함
+  const parts = [t, base, ...inner, ...subj]
+    .flatMap(x => [x, ...x.split(/\s*[\/,]\s*|\s+-\s+/)])
+    .map(x => x.trim()).filter(x => x.length >= 2 || (x === base && /^[가-힣]$/.test(x)));  // 한 글자는 '뷰' 같은 한글 용어 자체만
+  const alts = [...new Set(parts)].sort((a, b) => b.length - a.length)
+    .map(x => x.split(/\s+/).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('(?:\\([^)]*\\))?\\s*')  // "연관 관계" ~ "연관(Association) 관계"
+      .replace(/^(?=[A-Za-z0-9])/, '(?<![A-Za-z0-9])').replace(/([A-Za-z0-9]|\\\))$/, '$1(?![A-Za-z0-9])'));  // 영문·숫자 끝은 단어 단위로만 (O(n)이 for문의 o를 가리지 않게)
+  return text.replace(new RegExp(`(${alts.join('|')})(\\([^)]*\\))?`, 'gi'), '＿＿＿');
+}
+
+// 범위: 전체 / 챕터 / (요약 페이지의 주제 링크로 들어온 경우) 그 주제와 개별 용어
+const params = new URLSearchParams(location.search);
+scopeSel.add(new Option('전체 범위', ''));
+[...new Set(DATA.map(d => d.ch))].forEach(ch => scopeSel.add(new Option(ch, 'ch:' + ch.match(/^\d+/)[0])));
+const item = DATA.find(d => d.id === params.get('item'));
+if (item) scopeSel.add(new Option(`주제: ${item.q}`, 'item:' + item.id));
+scopeSel.value = item ? 'item:' + item.id : params.get('ch') ? 'ch:' + params.get('ch') : '';
+
+function build() {
+  const [type, val] = scopeSel.value.split(':');
+  deck = DATA.filter(d =>
+    (!type || (type === 'ch' ? d.ch.startsWith(val + '장 ') : d.id === val || d.parent === val)) &&
+    (kindSel.value === 'all' || (kindSel.value === 'term') === !!d.parent));
+  order = deck.map((_, i) => i); idx = 0; flipped = false;
+  try { history.replaceState(null, '', type ? `?${type}=${val}` : location.pathname); } catch (e) {}  // file:// 에서 막는 브라우저도 있음
+  render();
+}
+
+function render() {
+  const d = deck[order[idx]];
+  document.getElementById('mode').textContent = reverse ? '모드: 설명→용어' : '모드: 용어→설명';
+  document.getElementById('pos').textContent = deck.length ? `${idx + 1} / ${deck.length}` : '';
+  if (!d) { card.textContent = '이 범위에 문제가 없습니다.'; return; }
+  card.innerHTML = '';
+  const add = (cls, html) => {
+    const el = document.createElement('div');
+    el.className = cls; el.innerHTML = html; card.appendChild(el);
+  };
+  const addText = (cls, text) => { add(cls, ''); card.lastChild.textContent = text; };
+  addText('ch', d.ch);
+  const ctx = d.parent ? d.explain.split(' · ')[0] : '';  // 개별 용어의 상위 주제 (같은 이름 다른 뜻 구분용)
+  if (reverse) {
+    // 설명 → 용어
+    if (ctx) addText('ctx', mask(ctx, term(d)));
+    add('a', fmt(mask(d.a, term(d))));
+    if (flipped) addText('q answer', term(d));
+  } else {
+    // 용어 → 설명
+    addText('q', d.q);
+    if (ctx) addText('ctx', ctx);
+    if (flipped) add('a', fmt(d.a));
+  }
+  if (flipped) {
+    addText('ex', d.explain || '');
+    card.lastChild.insertAdjacentHTML('beforeend', pdfLink(d));
+  }
+}
+const flip = () => { flipped = !flipped; render(); };
+const go = n => { if (!deck.length) return; idx = (idx + n + order.length) % order.length; flipped = false; render(); };
+const toggleMode = () => { reverse = !reverse; flipped = false; render(); };
+
+card.onclick = e => { if (e.target.tagName !== 'A') flip(); };
+document.getElementById('prev').onclick = () => go(-1);
+document.getElementById('next').onclick = () => go(1);
+document.getElementById('shuffle').onclick = () => {
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  idx = 0; flipped = false; render();
+};
+document.getElementById('mode').onclick = toggleMode;
+scopeSel.onchange = kindSel.onchange = build;
+document.onkeydown = e => {
+  if (e.target.tagName === 'SELECT') return;
+  if (e.key === ' ') { e.preventDefault(); flip(); }
+  if (e.key === 'ArrowLeft') go(-1);
+  if (e.key === 'ArrowRight') go(1);
+  if (e.key === 'm' || e.key === 'M') toggleMode();
+};
+build();
+</script>
+</body>
+</html>
