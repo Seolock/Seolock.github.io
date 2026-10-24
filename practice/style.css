@@ -87,3 +87,20 @@ details.topic > .ex { padding-bottom: 14px; }
   details.topic > .a, details.topic > .ex { padding-left: 20px; padding-right: 16px; }
   details.topic > summary { padding-left: 16px; }
 }
+
+/* 핵심 노트 */
+#toc { display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0 4px; }
+.chip { padding: 4px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+.chip:hover { text-decoration: none; color: var(--accent); border-color: var(--accent); }
+.cat { scroll-margin-top: 12px; }
+.cat h2 { font-size: 18px; margin: 28px 0 10px; letter-spacing: -0.01em; }
+.note { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin: 10px 0; box-shadow: var(--shadow); }
+.note h3 { font-size: 15px; margin: 0 0 10px; }
+.flow { font-size: 13px; color: var(--accent); background: var(--accent-soft); padding: 6px 10px; border-radius: 8px; margin-bottom: 10px; }
+.note dl { margin: 0; }
+.note .row { display: grid; grid-template-columns: minmax(110px, 34%) 1fr; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.note .row:first-child { border-top: 0; }
+.note dt { font-weight: 600; }
+.note dd { margin: 0; color: var(--muted); }
+.note pre { margin: 0; padding: 12px 14px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; font-size: 13px; line-height: 1.55; overflow-x: auto; }
+@media (max-width: 520px) { .note .row { grid-template-columns: 1fr; gap: 2px; } }

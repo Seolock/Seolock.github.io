@@ -1,4 +1,4 @@
-# 페이지 표시에 필요한 파일만 올림: index.html, practice.html, style.css, fmt.js, data.js
+# 페이지 표시에 필요한 파일만 올림: index.html, practice.html, style.css, fmt.js, data.js, notes.html
 
 # 원본 교재 (저작권: 개인 용도 전용)
 *.pdf
@@ -10,3 +10,6 @@ __pycache__/
 
 # OS 파일
 .DS_Store
+
+# 핵심 노트 원본 사진 (notes.html에 옮겨 적음)
+important/
